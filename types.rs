@@ -186,10 +186,7 @@ impl TransactionType {
 pub struct EtherscanResponse<T> {
     pub status: String,
     pub message: String,
-    #[serde(rename = "result")]
     pub result: T,
-    #[serde(rename = "result")]
-    pub result_string: Option<String>,
 }
 
 /// Pagination parameters for API requests

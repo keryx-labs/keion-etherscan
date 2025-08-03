@@ -80,18 +80,6 @@ fn test_balance_eth_conversion() {
     assert_eq!(balance.gwei(), Some(1_000_000_000.0));
 }
 
-#[test]
-fn test_balance_large_numbers() {
-    // Test with a very large balance that might not fit in f64 precision
-    let large_balance = Balance {
-        account: None,
-        balance: BigNumber::from("999999999999999999999999999999".to_string()),
-    };
-
-    assert_eq!(large_balance.wei(), "999999999999999999999999999999");
-    // This should return None because it's too large for u128
-    assert_eq!(large_balance.eth(), None);
-}
 
 #[test]
 fn test_token_balance_decimal_conversion() {

@@ -20,13 +20,17 @@ pub enum EtherscanError {
 
     /// HTTP error response
     Http {
+        /// HTTP status code
         status: u16,
+        /// Error message
         message: String,
     },
 
     /// API returned an error status
     Api {
+        /// Error message from API
         message: String,
+        /// Optional result details
         result: Option<String>,
     },
 
@@ -47,7 +51,9 @@ pub enum EtherscanError {
 
     /// Rate limit exceeded
     RateLimit {
+        /// Seconds until retry is allowed
         retry_after: Option<u64>,
+        /// Rate limit message
         message: String,
     },
 
@@ -59,7 +65,9 @@ pub enum EtherscanError {
 
     /// Feature not supported on this network
     UnsupportedNetwork {
+        /// Network name
         network: String,
+        /// Feature name
         feature: String,
     },
 
@@ -102,13 +110,13 @@ impl EtherscanError {
 
     /// Check if this error is retryable
     pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            EtherscanError::Request(_) |
-            EtherscanError::Http { status, .. } if *status >= 500 ||
-            EtherscanError::RateLimit { .. } ||
-            EtherscanError::Timeout(_)
-        )
+        match self {
+            EtherscanError::Request(_) => true,
+            EtherscanError::Http { status, .. } => *status >= 500,
+            EtherscanError::RateLimit { .. } => true,
+            EtherscanError::Timeout(_) => true,
+            _ => false,
+        }
     }
 
     /// Get the error category for logging/metrics

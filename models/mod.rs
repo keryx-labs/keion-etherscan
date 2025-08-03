@@ -9,6 +9,8 @@ mod contract;
 mod block;
 mod token;
 mod gas;
+mod validated_block;
+mod beacon_withdrawal;
 
 pub use account::*;
 pub use transaction::*;
@@ -16,6 +18,8 @@ pub use contract::*;
 pub use block::*;
 pub use token::*;
 pub use gas::*;
+pub use validated_block::*;
+pub use beacon_withdrawal::*;
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

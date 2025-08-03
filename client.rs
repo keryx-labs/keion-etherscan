@@ -1,5 +1,5 @@
 use std::time::Duration;
-use reqwest::{Client, RequestBuilder};
+use reqwest::Client;
 use serde::de::DeserializeOwned;
 use url::Url;
 
@@ -221,7 +221,7 @@ impl EtherscanClient {
                     "1" => Ok(wrapper.result),
                     "0" => Err(EtherscanError::Api {
                         message: wrapper.message,
-                        result: wrapper.result_string,
+                        result: None,
                     }),
                     _ => Err(EtherscanError::Response(format!(
                         "Unknown status: {}", wrapper.status

@@ -18,7 +18,9 @@ pub use stats::Stats;
 
 /// Base trait for all endpoint groups
 pub trait EndpointGroup {
-    fn new(client: &EtherscanClient) -> Self;
+    fn new(client: &EtherscanClient) -> Self
+    where
+        Self: Sized;
 }
 
 /// Macro to implement common endpoint functionality

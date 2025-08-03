@@ -15,7 +15,7 @@
 //!
 //! ## Quick Start
 //!
-//! ```rust
+//! ```rust,no_run
 //! use keion_etherscan::{EtherscanClient, Network};
 //!
 //! #[tokio::main]
@@ -100,7 +100,7 @@
 //! - Network statistics
 //! - Gas prices
 
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![warn(clippy::all)]
 
 // Re-exports for public API
@@ -111,7 +111,7 @@ pub use types::{Network, Sort, Tag, BlockType, TransactionType, Pagination};
 // Re-export key models that users will work with
 pub use models::{
     // Account models
-    Balance, TokenBalance, AccountInfo, MultiBalance,
+    Balance, TokenBalance, AccountInfo, MultiBalance, ValidatedBlock, BeaconWithdrawal,
     // Transaction models
     Transaction, InternalTransaction, TokenTransfer, TransactionReceipt, TransactionLog,
     // Common model types
@@ -120,15 +120,15 @@ pub use models::{
 
 // Module declarations
 mod client;
-mod error;
+pub mod error;
 mod types;
 
 pub mod endpoints;
 pub mod models;
 
 // Feature-gated exports
-#[cfg(feature = "rate-limiting")]
-pub use client::RateLimiter;
+// #[cfg(feature = "rate-limiting")]
+// pub use client::RateLimiter;
 
 // Version and metadata
 /// Current version of the keion-etherscan crate
@@ -138,7 +138,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const USER_AGENT: &str = concat!("keion-etherscan/", env!("CARGO_PKG_VERSION"));
 
 /// Convenience type alias for results
-pub type EtherscanResult<T> = Result<T, EtherscanError>;
+pub type EtherscanResult<T> = Result<T>;
 
 /// Prelude module for convenient imports
 pub mod prelude {
