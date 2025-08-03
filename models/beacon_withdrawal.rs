@@ -1,5 +1,5 @@
+use crate::models::{Address, BigNumber, BlockchainData, StringNumber};
 use serde::{Deserialize, Serialize};
-use crate::models::{Address, StringNumber, BigNumber, BlockchainData};
 
 /// Beacon chain withdrawal event for a validator
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

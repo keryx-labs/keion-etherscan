@@ -1,5 +1,5 @@
+use crate::models::{Address, BigNumber, BlockchainData, HexNumber, StringNumber, TxHash};
 use serde::{Deserialize, Serialize};
-use crate::models::{Address, BigNumber, StringNumber, TxHash, HexNumber, BlockchainData};
 
 /// Standard Ethereum transaction
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

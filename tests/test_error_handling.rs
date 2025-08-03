@@ -1,7 +1,7 @@
 mod common;
 
-use common::{TestUtils, MockResponses};
-use keion_etherscan::{EtherscanError, EtherscanClient, Result};
+use common::{MockResponses, TestUtils};
+use keion_etherscan::{EtherscanClient, EtherscanError, Result};
 
 /// Test error handling for invalid addresses
 mod address_validation_tests {
@@ -38,7 +38,10 @@ mod address_validation_tests {
             .await;
 
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 
     #[tokio::test]
@@ -52,7 +55,10 @@ mod address_validation_tests {
             .await;
 
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 
     #[tokio::test]
@@ -66,7 +72,10 @@ mod address_validation_tests {
             .await;
 
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 
     #[tokio::test]
@@ -77,7 +86,7 @@ mod address_validation_tests {
         // This should succeed with address normalization
         // Note: In a real test, this would need mocking to avoid actual API calls
         let query = accounts.transactions(TestUtils::valid_address_mixed_case());
-        
+
         // The query should be buildable
         assert_eq!(query.get_address(), TestUtils::valid_address_mixed_case());
     }
@@ -109,7 +118,10 @@ mod address_validation_tests {
             .await;
 
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 
     #[tokio::test]
@@ -123,7 +135,10 @@ mod address_validation_tests {
             .await;
 
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 
     #[tokio::test]
@@ -134,16 +149,20 @@ mod address_validation_tests {
         // Test empty address list
         let result = accounts.balance_multi(&Vec::<&str>::new()).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidParams(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidParams(_)
+        ));
 
         // Test too many addresses (> 20)
-        let too_many_addresses: Vec<&str> = (0..25)
-            .map(|_| TestUtils::valid_address())
-            .collect();
-        
+        let too_many_addresses: Vec<&str> = (0..25).map(|_| TestUtils::valid_address()).collect();
+
         let result = accounts.balance_multi(&too_many_addresses).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidParams(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidParams(_)
+        ));
 
         // Test with invalid address in list
         let mixed_addresses = vec![
@@ -151,10 +170,13 @@ mod address_validation_tests {
             TestUtils::invalid_address_too_short(),
             TestUtils::valid_address(),
         ];
-        
+
         let result = accounts.balance_multi(&mixed_addresses).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), EtherscanError::InvalidAddress(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            EtherscanError::InvalidAddress(_)
+        ));
     }
 }
 
@@ -166,10 +188,10 @@ mod api_error_tests {
     async fn test_api_error_response_handling() {
         // Note: In a real implementation, this would use a mock HTTP client
         // For now, we test the error types and structure
-        
+
         let error = EtherscanError::api("Invalid address format");
         assert!(matches!(error, EtherscanError::Api { .. }));
-        
+
         if let EtherscanError::Api { message, result } = error {
             assert_eq!(message, "Invalid address format");
             assert_eq!(result, None);
@@ -180,8 +202,12 @@ mod api_error_tests {
     async fn test_rate_limit_error() {
         let error = EtherscanError::rate_limit("Max rate limit reached", Some(60));
         assert!(matches!(error, EtherscanError::RateLimit { .. }));
-        
-        if let EtherscanError::RateLimit { retry_after, message } = error {
+
+        if let EtherscanError::RateLimit {
+            retry_after,
+            message,
+        } = error
+        {
             assert_eq!(message, "Max rate limit reached");
             assert_eq!(retry_after, Some(60));
         }
@@ -235,10 +261,11 @@ mod malformed_data_tests {
     fn test_malformed_json_handling() {
         // Test that malformed JSON responses are handled properly
         let malformed_json = r#"{"status": "1", "message": "OK", "result": invalid_json}"#;
-        
-        let parse_result: std::result::Result<serde_json::Value, _> = serde_json::from_str(malformed_json);
+
+        let parse_result: std::result::Result<serde_json::Value, _> =
+            serde_json::from_str(malformed_json);
         assert!(parse_result.is_err());
-        
+
         // In the actual implementation, this would be converted to EtherscanError::Parse
         let error = EtherscanError::Parse("JSON parse error".to_string());
         assert!(matches!(error, EtherscanError::Parse(_)));
@@ -248,10 +275,11 @@ mod malformed_data_tests {
     fn test_missing_required_fields() {
         // Test JSON with missing required fields
         let incomplete_balance = r#"{"account": "0x123"}"#; // Missing balance field
-        
-        let parse_result: std::result::Result<serde_json::Value, _> = serde_json::from_str(incomplete_balance);
+
+        let parse_result: std::result::Result<serde_json::Value, _> =
+            serde_json::from_str(incomplete_balance);
         assert!(parse_result.is_ok()); // JSON is valid, but missing fields
-        
+
         // The actual deserialization to Balance struct would fail
         // This would result in EtherscanError::Parse in the real implementation
     }
@@ -264,10 +292,11 @@ mod malformed_data_tests {
             "timeStamp": "also_not_a_number",
             "blockReward": "definitely_not_a_number"
         }"#;
-        
-        let parse_result: std::result::Result<serde_json::Value, _> = serde_json::from_str(invalid_types);
+
+        let parse_result: std::result::Result<serde_json::Value, _> =
+            serde_json::from_str(invalid_types);
         assert!(parse_result.is_ok()); // JSON is valid
-        
+
         // But deserialization to ValidatedBlock would fail due to string-to-number conversion
     }
 
@@ -279,10 +308,11 @@ mod malformed_data_tests {
             "timeStamp": "",
             "balance": ""
         }"#;
-        
-        let parse_result: std::result::Result<serde_json::Value, _> = serde_json::from_str(empty_strings);
+
+        let parse_result: std::result::Result<serde_json::Value, _> =
+            serde_json::from_str(empty_strings);
         assert!(parse_result.is_ok());
-        
+
         // Empty strings should be handled gracefully in the deserializers
     }
 
@@ -294,10 +324,11 @@ mod malformed_data_tests {
             "timeStamp": null,
             "balance": null
         }"#;
-        
-        let parse_result: std::result::Result<serde_json::Value, _> = serde_json::from_str(null_values);
+
+        let parse_result: std::result::Result<serde_json::Value, _> =
+            serde_json::from_str(null_values);
         assert!(parse_result.is_ok());
-        
+
         // Null values should be handled appropriately based on field optionality
     }
 }
@@ -310,7 +341,7 @@ mod edge_case_error_tests {
     fn test_unsupported_network_features() {
         // Test unsupported network error
         let error = EtherscanError::unsupported_network("Goerli", "beacon_withdrawals");
-        
+
         assert!(matches!(error, EtherscanError::UnsupportedNetwork { .. }));
         if let EtherscanError::UnsupportedNetwork { network, feature } = error {
             assert_eq!(network, "Goerli");
@@ -324,7 +355,7 @@ mod edge_case_error_tests {
         let invalid_blocks = vec![
             "not_a_number",
             "-1",
-            "0x", // Invalid hex
+            "0x",           // Invalid hex
             "pending_typo", // Should be "pending"
             "latest_typo",  // Should be "latest"
         ];
@@ -339,9 +370,9 @@ mod edge_case_error_tests {
     fn test_invalid_transaction_hash_formats() {
         let invalid_hashes = vec![
             TestUtils::invalid_tx_hash_too_short(),
-            TestUtils::invalid_tx_hash_no_prefix(), 
+            TestUtils::invalid_tx_hash_no_prefix(),
             TestUtils::invalid_tx_hash_non_hex(),
-            "", // Empty hash
+            "",   // Empty hash
             "0x", // Just prefix
         ];
 
@@ -362,9 +393,7 @@ mod edge_case_error_tests {
             .transactions(TestUtils::valid_address())
             .page(u32::MAX);
 
-        let _zero_offset = accounts
-            .transactions(TestUtils::valid_address())
-            .offset(0);
+        let _zero_offset = accounts.transactions(TestUtils::valid_address()).offset(0);
 
         // Block range where start > end
         let _invalid_range = accounts

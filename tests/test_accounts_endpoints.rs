@@ -1,6 +1,6 @@
 mod common;
 
-use common::{TestUtils, TestConstants};
+use common::{TestConstants, TestUtils};
 use keion_etherscan::{EtherscanClient, Network, Sort, TransactionType};
 
 /// Test all account endpoint builders (non-async tests)
@@ -21,9 +21,18 @@ mod builder_tests {
             .sort(Sort::Ascending);
 
         assert_eq!(query.get_pagination().page, Some(1));
-        assert_eq!(query.get_pagination().offset, Some(TestConstants::STANDARD_PAGE_SIZE));
-        assert_eq!(query.get_pagination().start_block, Some(TestConstants::OLD_BLOCK));
-        assert_eq!(query.get_pagination().end_block, Some(TestConstants::RECENT_BLOCK));
+        assert_eq!(
+            query.get_pagination().offset,
+            Some(TestConstants::STANDARD_PAGE_SIZE)
+        );
+        assert_eq!(
+            query.get_pagination().start_block,
+            Some(TestConstants::OLD_BLOCK)
+        );
+        assert_eq!(
+            query.get_pagination().end_block,
+            Some(TestConstants::RECENT_BLOCK)
+        );
         assert_eq!(query.get_pagination().sort, Some(Sort::Ascending));
         assert_eq!(query.get_tx_type(), TransactionType::Normal);
     }
@@ -40,7 +49,10 @@ mod builder_tests {
             .offset(50);
 
         assert!(query.get_contract_address().is_some());
-        assert_eq!(query.get_contract_address().as_ref().unwrap(), TestUtils::contract_address());
+        assert_eq!(
+            query.get_contract_address().as_ref().unwrap(),
+            TestUtils::contract_address()
+        );
         assert_eq!(query.get_pagination().page, Some(2));
         assert_eq!(query.get_pagination().offset, Some(50));
         assert_eq!(query.get_tx_type(), TransactionType::Token);
@@ -63,8 +75,14 @@ mod builder_tests {
         assert_eq!(query.get_address(), TestUtils::valid_address());
         assert_eq!(query.get_pagination().page, Some(1));
         assert_eq!(query.get_pagination().offset, Some(50));
-        assert_eq!(query.get_pagination().start_block, Some(TestConstants::OLD_BLOCK));
-        assert_eq!(query.get_pagination().end_block, Some(TestConstants::RECENT_BLOCK));
+        assert_eq!(
+            query.get_pagination().start_block,
+            Some(TestConstants::OLD_BLOCK)
+        );
+        assert_eq!(
+            query.get_pagination().end_block,
+            Some(TestConstants::RECENT_BLOCK)
+        );
         assert_eq!(query.get_pagination().sort, Some(Sort::Descending));
     }
 
@@ -74,9 +92,7 @@ mod builder_tests {
         let accounts = client.accounts();
 
         let tx_hash = TestUtils::valid_tx_hash();
-        let query = accounts
-            .internal_transactions()
-            .by_hash(tx_hash);
+        let query = accounts.internal_transactions().by_hash(tx_hash);
 
         assert_eq!(query.get_tx_hash(), tx_hash);
     }
@@ -98,7 +114,10 @@ mod builder_tests {
         assert_eq!(query.get_start_block(), start_block);
         assert_eq!(query.get_end_block(), end_block);
         assert_eq!(query.get_pagination().page, Some(2));
-        assert_eq!(query.get_pagination().offset, Some(TestConstants::STANDARD_PAGE_SIZE));
+        assert_eq!(
+            query.get_pagination().offset,
+            Some(TestConstants::STANDARD_PAGE_SIZE)
+        );
         assert_eq!(query.get_pagination().sort, Some(Sort::Ascending));
     }
 
@@ -136,7 +155,10 @@ mod builder_tests {
         assert_eq!(query.get_start_block(), Some(TestConstants::MAINNET_BLOCK));
         assert_eq!(query.get_end_block(), Some(TestConstants::RECENT_BLOCK));
         assert_eq!(query.get_pagination().page, Some(1));
-        assert_eq!(query.get_pagination().offset, Some(TestConstants::STANDARD_PAGE_SIZE));
+        assert_eq!(
+            query.get_pagination().offset,
+            Some(TestConstants::STANDARD_PAGE_SIZE)
+        );
         assert_eq!(query.get_pagination().sort, Some(Sort::Descending));
     }
 
@@ -162,9 +184,7 @@ mod builder_tests {
 
         let address = TestUtils::valid_address();
         let block_number = TestConstants::MAINNET_BLOCK;
-        let query = accounts
-            .historical_balance(address)
-            .at_block(block_number);
+        let query = accounts.historical_balance(address).at_block(block_number);
 
         assert_eq!(query.get_address(), address);
         assert_eq!(query.get_block_number(), Some(block_number));
@@ -175,8 +195,7 @@ mod builder_tests {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
 
-        let query = accounts
-            .historical_balance(TestUtils::valid_address());
+        let query = accounts.historical_balance(TestUtils::valid_address());
 
         // Without at_block, should default to None (latest)
         assert_eq!(query.get_block_number(), None);
@@ -195,7 +214,7 @@ mod edge_case_tests {
         // Test with mixed case address
         let mixed_case = TestUtils::valid_address_mixed_case();
         let query = accounts.transactions(mixed_case);
-        
+
         // Address should be stored as provided (normalization happens in execute)
         assert_eq!(query.get_address(), mixed_case);
     }
@@ -204,22 +223,25 @@ mod edge_case_tests {
     fn test_pagination_edge_cases() {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
-        
+
         // Test very large pagination values
         let query = accounts
             .transactions(TestUtils::valid_address())
             .page(u32::MAX)
             .offset(TestConstants::MAX_PAGE_SIZE);
-        
+
         assert_eq!(query.get_pagination().page, Some(u32::MAX));
-        assert_eq!(query.get_pagination().offset, Some(TestConstants::MAX_PAGE_SIZE));
+        assert_eq!(
+            query.get_pagination().offset,
+            Some(TestConstants::MAX_PAGE_SIZE)
+        );
     }
 
     #[test]
     fn test_zero_values() {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
-        
+
         // Test zero/minimal values
         let query = accounts
             .beacon_withdrawals(TestUtils::valid_address())
@@ -227,7 +249,7 @@ mod edge_case_tests {
             .end_block(0)
             .page(0)
             .offset(0);
-        
+
         assert_eq!(query.get_start_block(), Some(0));
         assert_eq!(query.get_end_block(), Some(0));
         assert_eq!(query.get_pagination().page, Some(0));
@@ -252,12 +274,24 @@ mod edge_case_tests {
             .page(1)
             .block_range(TestConstants::OLD_BLOCK, TestConstants::RECENT_BLOCK);
 
-        assert_eq!(query1.get_pagination().start_block, Some(TestConstants::OLD_BLOCK));
-        assert_eq!(query1.get_pagination().end_block, Some(TestConstants::RECENT_BLOCK));
+        assert_eq!(
+            query1.get_pagination().start_block,
+            Some(TestConstants::OLD_BLOCK)
+        );
+        assert_eq!(
+            query1.get_pagination().end_block,
+            Some(TestConstants::RECENT_BLOCK)
+        );
         assert_eq!(query1.get_pagination().page, Some(1));
 
-        assert_eq!(query2.get_pagination().start_block, Some(TestConstants::OLD_BLOCK));
-        assert_eq!(query2.get_pagination().end_block, Some(TestConstants::RECENT_BLOCK));
+        assert_eq!(
+            query2.get_pagination().start_block,
+            Some(TestConstants::OLD_BLOCK)
+        );
+        assert_eq!(
+            query2.get_pagination().end_block,
+            Some(TestConstants::RECENT_BLOCK)
+        );
         assert_eq!(query2.get_pagination().page, Some(1));
     }
 
@@ -288,20 +322,20 @@ mod edge_case_tests {
     fn test_parameter_validation_boundary_cases() {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
-        
+
         // Test that builders accept boundary cases
         // (Note: These would fail at runtime during execute(), not at builder creation)
-        
+
         // Invalid transaction hash length (builder should still work)
         let _invalid_hash_query = accounts
             .internal_transactions()
             .by_hash(TestUtils::invalid_tx_hash_too_short());
-        
+
         // Block range where end < start (builder should still work)
         let _block_range_query = accounts
             .internal_transactions()
             .by_block_range(TestConstants::RECENT_BLOCK, TestConstants::OLD_BLOCK);
-        
+
         // These compile but would fail validation in execute()
     }
 
@@ -343,7 +377,7 @@ mod network_tests {
             let _balance_query = accounts.historical_balance(TestUtils::valid_address());
             let _tx_query = accounts.transactions(TestUtils::valid_address());
             let _internal_query = accounts.internal_transactions();
-            
+
             assert_eq!(client.network(), network);
         }
     }
@@ -353,13 +387,14 @@ mod network_tests {
         // Beacon withdrawals are only available on mainnet post-merge
         let mainnet_client = TestUtils::create_test_client_for_network(Network::Mainnet);
         let accounts = mainnet_client.accounts();
-        
+
         let _withdrawals_query = accounts.beacon_withdrawals(TestUtils::validator_address());
-        
+
         // Should compile for all networks, but API would return errors for non-mainnet
         let goerli_client = TestUtils::create_test_client_for_network(Network::Goerli);
         let goerli_accounts = goerli_client.accounts();
-        
-        let _goerli_withdrawals_query = goerli_accounts.beacon_withdrawals(TestUtils::validator_address());
+
+        let _goerli_withdrawals_query =
+            goerli_accounts.beacon_withdrawals(TestUtils::validator_address());
     }
 }

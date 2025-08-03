@@ -10,6 +10,6 @@ impl<'a> Stats<'a> {
     pub fn new(client: &'a EtherscanClient) -> Self {
         Self { client }
     }
-    
+
     // TODO: Implement stats endpoints
 }

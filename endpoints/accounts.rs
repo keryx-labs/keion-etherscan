@@ -1,8 +1,11 @@
 use crate::{
-    EtherscanClient, Result, EtherscanError,
-    types::{Sort, Tag, Pagination, TransactionType},
-    models::{Balance, Transaction, TokenBalance, TokenTransfer, InternalTransaction, ValidatedBlock, BeaconWithdrawal},
     error::validation::normalize_address,
+    models::{
+        Balance, BeaconWithdrawal, InternalTransaction, TokenBalance, TokenTransfer, Transaction,
+        ValidatedBlock,
+    },
+    types::{Pagination, Sort, Tag, TransactionType},
+    EtherscanClient, EtherscanError, Result,
 };
 
 /// Account-related API endpoints
@@ -10,7 +13,6 @@ use crate::{
 pub struct Accounts<'a> {
     client: &'a EtherscanClient,
 }
-
 
 impl<'a> Accounts<'a> {
     pub fn new(client: &'a EtherscanClient) -> Self {
@@ -25,7 +27,7 @@ impl<'a> Accounts<'a> {
     /// # Example
     /// ```rust,no_run
     /// use keion_etherscan::EtherscanClient;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> keion_etherscan::Result<()> {
     ///     let client = EtherscanClient::new("YOUR_API_KEY")?;
@@ -38,10 +40,7 @@ impl<'a> Accounts<'a> {
     pub async fn balance<S: AsRef<str>>(&self, address: S) -> Result<Balance> {
         let address = normalize_address(address.as_ref())?;
 
-        let params = [
-            ("address", address.as_str()),
-            ("tag", "latest"),
-        ];
+        let params = [("address", address.as_str()), ("tag", "latest")];
 
         self.client.get("account", "balance", &params).await
     }
@@ -51,10 +50,7 @@ impl<'a> Accounts<'a> {
         let address = normalize_address(address.as_ref())?;
         let tag_str = tag.as_str();
 
-        let params = [
-            ("address", address.as_str()),
-            ("tag", tag_str.as_str()),
-        ];
+        let params = [("address", address.as_str()), ("tag", tag_str.as_str())];
 
         self.client.get("account", "balance", &params).await
     }
@@ -67,7 +63,7 @@ impl<'a> Accounts<'a> {
     /// # Example
     /// ```rust,no_run
     /// use keion_etherscan::EtherscanClient;
-    /// 
+    ///
     /// #[tokio::main]
     /// async fn main() -> keion_etherscan::Result<()> {
     ///     let client = EtherscanClient::new("YOUR_API_KEY")?;
@@ -82,11 +78,15 @@ impl<'a> Accounts<'a> {
     /// ```
     pub async fn balance_multi<S: AsRef<str>>(&self, addresses: &[S]) -> Result<Vec<Balance>> {
         if addresses.is_empty() {
-            return Err(EtherscanError::InvalidParams("At least one address required".to_string()));
+            return Err(EtherscanError::InvalidParams(
+                "At least one address required".to_string(),
+            ));
         }
 
         if addresses.len() > 20 {
-            return Err(EtherscanError::InvalidParams("Maximum 20 addresses allowed".to_string()));
+            return Err(EtherscanError::InvalidParams(
+                "Maximum 20 addresses allowed".to_string(),
+            ));
         }
 
         // Validate and normalize all addresses
@@ -97,10 +97,7 @@ impl<'a> Accounts<'a> {
         let normalized = normalized?;
 
         let address_list = normalized.join(",");
-        let params = [
-            ("address", address_list.as_str()),
-            ("tag", "latest"),
-        ];
+        let params = [("address", address_list.as_str()), ("tag", "latest")];
 
         self.client.get("account", "balancemulti", &params).await
     }
@@ -139,10 +136,7 @@ impl<'a> Accounts<'a> {
     pub async fn token_balances<S: AsRef<str>>(&self, address: S) -> Result<Vec<TokenBalance>> {
         let address = normalize_address(address.as_ref())?;
 
-        let params = [
-            ("address", address.as_str()),
-            ("tag", "latest"),
-        ];
+        let params = [("address", address.as_str()), ("tag", "latest")];
 
         self.client.get("account", "tokenlist", &params).await
     }
@@ -153,12 +147,18 @@ impl<'a> Accounts<'a> {
     }
 
     /// Get beacon chain withdrawals for an address
-    pub fn beacon_withdrawals<S: AsRef<str>>(&self, address: S) -> BeaconWithdrawalsQueryBuilder<'a> {
+    pub fn beacon_withdrawals<S: AsRef<str>>(
+        &self,
+        address: S,
+    ) -> BeaconWithdrawalsQueryBuilder<'a> {
         BeaconWithdrawalsQueryBuilder::new(self.client, address.as_ref())
     }
 
     /// Get historical balance for a single address at a specific block
-    pub fn historical_balance<S: AsRef<str>>(&self, address: S) -> HistoricalBalanceQueryBuilder<'a> {
+    pub fn historical_balance<S: AsRef<str>>(
+        &self,
+        address: S,
+    ) -> HistoricalBalanceQueryBuilder<'a> {
         HistoricalBalanceQueryBuilder::new(self.client, address.as_ref())
     }
 }
@@ -244,12 +244,11 @@ impl<'a> TransactionQueryBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", self.tx_type.as_str(), &params_ref).await
+        self.client
+            .get("account", self.tx_type.as_str(), &params_ref)
+            .await
     }
 }
 
@@ -317,16 +316,13 @@ impl<'a> TokenTransferQueryBuilder<'a> {
         &self.address
     }
 
-
     pub fn get_tx_type(&self) -> TransactionType {
         self.tx_type
     }
 
-
     pub fn get_contract_address(&self) -> &Option<String> {
         &self.contract_address
     }
-
 
     pub fn get_pagination(&self) -> &Pagination {
         &self.pagination
@@ -351,12 +347,11 @@ impl<'a> TokenTransferQueryBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", self.tx_type.as_str(), &params_ref).await
+        self.client
+            .get("account", self.tx_type.as_str(), &params_ref)
+            .await
     }
 }
 
@@ -382,7 +377,11 @@ impl<'a> InternalTransactionQueryBuilder<'a> {
     }
 
     /// Query internal transactions by block range
-    pub fn by_block_range(self, start_block: u64, end_block: u64) -> InternalTxByBlockRangeBuilder<'a> {
+    pub fn by_block_range(
+        self,
+        start_block: u64,
+        end_block: u64,
+    ) -> InternalTxByBlockRangeBuilder<'a> {
         InternalTxByBlockRangeBuilder::new(self.client, start_block, end_block)
     }
 }
@@ -441,7 +440,6 @@ impl<'a> InternalTxByAddressBuilder<'a> {
         &self.address
     }
 
-
     pub fn get_pagination(&self) -> &Pagination {
         &self.pagination
     }
@@ -458,12 +456,11 @@ impl<'a> InternalTxByAddressBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", "txlistinternal", &params_ref).await
+        self.client
+            .get("account", "txlistinternal", &params_ref)
+            .await
     }
 }
 
@@ -537,11 +534,9 @@ impl<'a> InternalTxByBlockRangeBuilder<'a> {
         self.start_block
     }
 
-
     pub fn get_end_block(&self) -> u64 {
         self.end_block
     }
-
 
     pub fn get_pagination(&self) -> &Pagination {
         &self.pagination
@@ -561,12 +556,11 @@ impl<'a> InternalTxByBlockRangeBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", "txlistinternal", &params_ref).await
+        self.client
+            .get("account", "txlistinternal", &params_ref)
+            .await
     }
 }
 
@@ -605,7 +599,6 @@ impl<'a> ValidatedBlocksQueryBuilder<'a> {
         &self.address
     }
 
-
     pub fn get_pagination(&self) -> &Pagination {
         &self.pagination
     }
@@ -622,12 +615,11 @@ impl<'a> ValidatedBlocksQueryBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", "getminedblocks", &params_ref).await
+        self.client
+            .get("account", "getminedblocks", &params_ref)
+            .await
     }
 }
 
@@ -695,16 +687,13 @@ impl<'a> BeaconWithdrawalsQueryBuilder<'a> {
         &self.address
     }
 
-
     pub fn get_start_block(&self) -> Option<u64> {
         self.start_block
     }
 
-
     pub fn get_end_block(&self) -> Option<u64> {
         self.end_block
     }
-
 
     pub fn get_pagination(&self) -> &Pagination {
         &self.pagination
@@ -730,12 +719,11 @@ impl<'a> BeaconWithdrawalsQueryBuilder<'a> {
         }
 
         // Convert to &str tuples for the API call
-        let params_ref: Vec<(&str, &str)> = params
-            .iter()
-            .map(|(k, v)| (*k, v.as_str()))
-            .collect();
+        let params_ref: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        self.client.get("account", "beaconwithdrawal", &params_ref).await
+        self.client
+            .get("account", "beaconwithdrawal", &params_ref)
+            .await
     }
 }
 
@@ -768,7 +756,6 @@ impl<'a> HistoricalBalanceQueryBuilder<'a> {
         &self.address
     }
 
-
     pub fn get_block_number(&self) -> Option<u64> {
         self.block_number
     }
@@ -776,16 +763,13 @@ impl<'a> HistoricalBalanceQueryBuilder<'a> {
     /// Execute the query
     pub async fn execute(self) -> Result<Balance> {
         let address = normalize_address(&self.address)?;
-        let block_tag = self.block_number
+        let block_tag = self
+            .block_number
             .map(|n| n.to_string())
             .unwrap_or_else(|| "latest".to_string());
 
-        let params = [
-            ("address", address.as_str()),
-            ("tag", block_tag.as_str()),
-        ];
+        let params = [("address", address.as_str()), ("tag", block_tag.as_str())];
 
         self.client.get("account", "balance", &params).await
     }
 }
-

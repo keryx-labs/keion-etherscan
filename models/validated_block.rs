@@ -1,5 +1,5 @@
+use crate::models::{BlockchainData, StringNumber};
 use serde::{Deserialize, Serialize};
-use crate::models::{StringNumber, BlockchainData};
 
 /// Block validated by a validator address
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

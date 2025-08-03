@@ -160,12 +160,10 @@ impl fmt::Display for EtherscanError {
             EtherscanError::Http { status, message } => {
                 write!(f, "HTTP error {}: {}", status, message)
             }
-            EtherscanError::Api { message, result } => {
-                match result {
-                    Some(result) => write!(f, "API error: {} (result: {})", message, result),
-                    None => write!(f, "API error: {}", message),
-                }
-            }
+            EtherscanError::Api { message, result } => match result {
+                Some(result) => write!(f, "API error: {} (result: {})", message, result),
+                None => write!(f, "API error: {}", message),
+            },
             EtherscanError::Response(msg) => {
                 write!(f, "Response error: {}", msg)
             }
@@ -181,12 +179,17 @@ impl fmt::Display for EtherscanError {
             EtherscanError::InvalidBlock(block) => {
                 write!(f, "Invalid block identifier: {}", block)
             }
-            EtherscanError::RateLimit { retry_after, message } => {
-                match retry_after {
-                    Some(seconds) => write!(f, "Rate limit exceeded: {} (retry after {} seconds)", message, seconds),
-                    None => write!(f, "Rate limit exceeded: {}", message),
-                }
-            }
+            EtherscanError::RateLimit {
+                retry_after,
+                message,
+            } => match retry_after {
+                Some(seconds) => write!(
+                    f,
+                    "Rate limit exceeded: {} (retry after {} seconds)",
+                    message, seconds
+                ),
+                None => write!(f, "Rate limit exceeded: {}", message),
+            },
             EtherscanError::Timeout(msg) => {
                 write!(f, "Request timeout: {}", msg)
             }
@@ -194,7 +197,11 @@ impl fmt::Display for EtherscanError {
                 write!(f, "Invalid parameters: {}", msg)
             }
             EtherscanError::UnsupportedNetwork { network, feature } => {
-                write!(f, "Feature '{}' is not supported on network '{}'", feature, network)
+                write!(
+                    f,
+                    "Feature '{}' is not supported on network '{}'",
+                    feature, network
+                )
             }
             EtherscanError::Internal(msg) => {
                 write!(f, "Internal error: {}", msg)

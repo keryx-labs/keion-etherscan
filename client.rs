@@ -1,12 +1,12 @@
-use std::time::Duration;
 use reqwest::Client;
 use serde::de::DeserializeOwned;
+use std::time::Duration;
 use url::Url;
 
 use crate::{
+    endpoints::{Accounts, Blocks, Contracts, Stats, Tokens, Transactions},
     error::{EtherscanError, Result},
-    types::{Network, EtherscanResponse},
-    endpoints::{Accounts, Transactions, Contracts, Blocks, Tokens, Stats},
+    types::{EtherscanResponse, Network},
 };
 
 /// Main client for interacting with the Etherscan API
@@ -74,7 +74,9 @@ impl EtherscanClientBuilder {
     pub fn build(self) -> Result<EtherscanClient> {
         let api_key = self.api_key.ok_or(EtherscanError::MissingApiKey)?;
 
-        let base_url = self.network.base_url()
+        let base_url = self
+            .network
+            .base_url()
             .parse()
             .map_err(|e| EtherscanError::InvalidUrl(format!("Invalid base URL: {}", e)))?;
 
@@ -127,7 +129,7 @@ impl EtherscanClient {
     pub fn api_key_preview(&self) -> String {
         let key = &self.api_key;
         if key.len() > 8 {
-            format!("{}...{}", &key[..4], &key[key.len()-4..])
+            format!("{}...{}", &key[..4], &key[key.len() - 4..])
         } else {
             "****".to_string()
         }
@@ -165,7 +167,12 @@ impl EtherscanClient {
     }
 
     // Internal methods for making requests
-    pub(crate) async fn get<T>(&self, module: &str, action: &str, params: &[(&str, &str)]) -> Result<T>
+    pub(crate) async fn get<T>(
+        &self,
+        module: &str,
+        action: &str,
+        params: &[(&str, &str)],
+    ) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -194,13 +201,18 @@ impl EtherscanClient {
         }
 
         let request = self.http_client.get(url);
-        let response = request.send().await
+        let response = request
+            .send()
+            .await
             .map_err(|e| EtherscanError::Request(e.to_string()))?;
 
         if !response.status().is_success() {
             return Err(EtherscanError::Http {
                 status: response.status().as_u16(),
-                message: response.text().await.unwrap_or_else(|_| "Unknown error".to_string()),
+                message: response
+                    .text()
+                    .await
+                    .unwrap_or_else(|_| "Unknown error".to_string()),
             });
         }
 
@@ -211,23 +223,24 @@ impl EtherscanClient {
     where
         T: DeserializeOwned,
     {
-        let text = response.text().await
+        let text = response
+            .text()
+            .await
             .map_err(|e| EtherscanError::Response(format!("Failed to read response: {}", e)))?;
 
         // First try to parse as EtherscanResponse wrapper
         match serde_json::from_str::<EtherscanResponse<T>>(&text) {
-            Ok(wrapper) => {
-                match wrapper.status.as_str() {
-                    "1" => Ok(wrapper.result),
-                    "0" => Err(EtherscanError::Api {
-                        message: wrapper.message,
-                        result: None,
-                    }),
-                    _ => Err(EtherscanError::Response(format!(
-                        "Unknown status: {}", wrapper.status
-                    ))),
-                }
-            }
+            Ok(wrapper) => match wrapper.status.as_str() {
+                "1" => Ok(wrapper.result),
+                "0" => Err(EtherscanError::Api {
+                    message: wrapper.message,
+                    result: None,
+                }),
+                _ => Err(EtherscanError::Response(format!(
+                    "Unknown status: {}",
+                    wrapper.status
+                ))),
+            },
             Err(_) => {
                 // Fallback: try to parse directly as T
                 serde_json::from_str(&text)

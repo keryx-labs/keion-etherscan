@@ -106,16 +106,44 @@
 // Re-exports for public API
 pub use client::{EtherscanClient, EtherscanClientBuilder};
 pub use error::{EtherscanError, Result};
-pub use types::{Network, Sort, Tag, BlockType, TransactionType, Pagination};
+pub use types::{BlockType, Network, Pagination, Sort, Tag, TransactionType};
 
 // Re-export key models that users will work with
 pub use models::{
-    // Account models
-    Balance, TokenBalance, AccountInfo, MultiBalance, ValidatedBlock, BeaconWithdrawal,
-    // Transaction models
-    Transaction, InternalTransaction, TokenTransfer, TransactionReceipt, TransactionLog,
+    AccountInfo,
     // Common model types
-    Address, TxHash, BigNumber, StringNumber, HexNumber,
+    Address,
+    // Account models
+    Balance,
+    BeaconWithdrawal,
+    BigNumber,
+    CodeFormat,
+    // Contract models
+    ContractAbi,
+    ContractCreation,
+    ContractSource,
+    HexNumber,
+    InternalTransaction,
+    LibraryLink,
+    MultiBalance,
+    OptimizationSettings,
+    ProxyVerificationStatus,
+    StringNumber,
+    TokenBalance,
+    TokenTransfer,
+    // Transaction models
+    Transaction,
+    TransactionLog,
+    TransactionReceipt,
+    TxHash,
+    ValidatedBlock,
+    VerificationRequest,
+    VerificationStatus,
+};
+
+// Re-export key endpoint builders for convenience
+pub use endpoints::contracts::{
+    ProxyVerificationBuilder, SolidityVerificationBuilder, VyperVerificationBuilder,
 };
 
 // Module declarations
@@ -144,9 +172,7 @@ pub type EtherscanResult<T> = Result<T>;
 pub mod prelude {
     //! Convenient re-exports for common usage
     pub use crate::{
-        EtherscanClient, EtherscanError, Result,
-        Network, Sort, Tag, BlockType,
-        Balance, Transaction, TokenTransfer,
-        Address, TxHash,
+        Address, Balance, BlockType, EtherscanClient, EtherscanError, Network, Result, Sort, Tag,
+        TokenTransfer, Transaction, TxHash,
     };
 }

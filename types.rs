@@ -285,8 +285,14 @@ mod tests {
     #[test]
     fn test_network_urls() {
         assert_eq!(Network::Mainnet.base_url(), "https://api.etherscan.io/api");
-        assert_eq!(Network::Goerli.base_url(), "https://api-goerli.etherscan.io/api");
-        assert_eq!(Network::BinanceSmartChain.base_url(), "https://api.bscscan.com/api");
+        assert_eq!(
+            Network::Goerli.base_url(),
+            "https://api-goerli.etherscan.io/api"
+        );
+        assert_eq!(
+            Network::BinanceSmartChain.base_url(),
+            "https://api.bscscan.com/api"
+        );
     }
 
     #[test]

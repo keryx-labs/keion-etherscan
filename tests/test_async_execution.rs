@@ -1,6 +1,6 @@
 mod common;
 
-use common::{TestUtils, MockResponses, TestConstants};
+use common::{MockResponses, TestConstants, TestUtils};
 use keion_etherscan::{EtherscanClient, Network, Sort};
 use serde_json::json;
 
@@ -19,7 +19,7 @@ mod balance_execution_tests {
         // Test that the balance query can be constructed and has the right structure
         // In a real implementation, this would be mocked to return MockResponses::balance_response()
         let balance_query = accounts.balance(TestUtils::valid_address());
-        
+
         // We can't actually execute without mocking, but we can verify the query structure
         // In a mocked version, this would be:
         // let balance = balance_query.await.unwrap();
@@ -31,15 +31,12 @@ mod balance_execution_tests {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
 
-        let addresses = vec![
-            TestUtils::valid_address(),
-            TestUtils::validator_address(),
-        ];
+        let addresses = vec![TestUtils::valid_address(), TestUtils::validator_address()];
 
         // Test multi-balance query structure
         // In a mocked version, this would return MockResponses::multi_balance_response()
         let multi_balance_query = accounts.balance_multi(&addresses);
-        
+
         // Verify the addresses are correctly structured for the API call
         assert_eq!(addresses.len(), 2);
         assert!(addresses.len() <= TestConstants::MAX_MULTI_ADDRESS_COUNT);
@@ -51,10 +48,10 @@ mod balance_execution_tests {
         let accounts = client.accounts();
 
         let balance_query = accounts.balance_at_block(
-            TestUtils::valid_address(), 
-            keion_etherscan::Tag::Block(TestConstants::MAINNET_BLOCK)
+            TestUtils::valid_address(),
+            keion_etherscan::Tag::Block(TestConstants::MAINNET_BLOCK),
         );
-        
+
         // In a mocked version, this would execute and return a balance
         // let balance = balance_query.await.unwrap();
         // assert!(balance.wei().parse::<u128>().unwrap() > 0);
@@ -105,7 +102,10 @@ mod transaction_execution_tests {
 
         // Verify contract address is set
         assert!(query.get_contract_address().is_some());
-        assert_eq!(query.get_contract_address().as_ref().unwrap(), TestUtils::contract_address());
+        assert_eq!(
+            query.get_contract_address().as_ref().unwrap(),
+            TestUtils::contract_address()
+        );
 
         // In a mocked version:
         // let transfers = query.execute().await.unwrap();
@@ -132,14 +132,14 @@ mod internal_transaction_execution_tests {
 
         // Verify the address is properly set
         assert_eq!(query.get_address(), TestUtils::valid_address());
-        
+
         // In a mocked implementation, this would:
         // 1. Normalize the address to lowercase
         // 2. Construct API parameters: module=account, action=txlistinternal, address=..., page=1, offset=100, sort=asc
         // 3. Make HTTP request to Etherscan API
         // 4. Parse response as Vec<InternalTransaction>
         // 5. Return the parsed result
-        
+
         // let internal_txs = query.execute().await.unwrap();
         // assert!(!internal_txs.is_empty());
         // assert_eq!(internal_txs[0].transaction_type, "call");
@@ -151,9 +151,7 @@ mod internal_transaction_execution_tests {
         let accounts = client.accounts();
 
         let tx_hash = TestUtils::valid_tx_hash();
-        let query = accounts
-            .internal_transactions()
-            .by_hash(tx_hash);
+        let query = accounts.internal_transactions().by_hash(tx_hash);
 
         assert_eq!(query.get_tx_hash(), tx_hash);
 
@@ -243,9 +241,7 @@ mod new_endpoints_execution_tests {
 
         let address = TestUtils::valid_address();
         let block_number = TestConstants::MAINNET_BLOCK;
-        let query = accounts
-            .historical_balance(address)
-            .at_block(block_number);
+        let query = accounts.historical_balance(address).at_block(block_number);
 
         assert_eq!(query.get_address(), address);
         assert_eq!(query.get_block_number(), Some(block_number));
@@ -261,7 +257,7 @@ mod new_endpoints_execution_tests {
         let accounts = client.accounts();
 
         let query = accounts.historical_balance(TestUtils::valid_address());
-        
+
         // Should default to None (latest)
         assert_eq!(query.get_block_number(), None);
 
@@ -285,7 +281,7 @@ mod parameter_construction_tests {
             .sort(Sort::Descending);
 
         let params = pagination.to_params();
-        
+
         // Verify all parameters are correctly formatted
         assert!(params.contains(&("page", "1".to_string())));
         assert!(params.contains(&("offset", "100".to_string())));
@@ -298,7 +294,7 @@ mod parameter_construction_tests {
     fn test_empty_pagination_parameters() {
         let pagination = keion_etherscan::Pagination::new();
         let params = pagination.to_params();
-        
+
         // Should be empty when no parameters are set
         assert!(params.is_empty());
     }
@@ -310,7 +306,7 @@ mod parameter_construction_tests {
             .sort(Sort::Ascending);
 
         let params = pagination.to_params();
-        
+
         // Should only contain the set parameters
         assert_eq!(params.len(), 2);
         assert!(params.contains(&("page", "5".to_string())));
@@ -325,7 +321,7 @@ mod response_parsing_tests {
     #[test]
     fn test_mock_balance_response_structure() {
         let mock_response = MockResponses::balance_response();
-        
+
         // Verify the mock response has the expected structure
         assert_eq!(mock_response["status"], "1");
         assert_eq!(mock_response["message"], "OK");
@@ -335,10 +331,10 @@ mod response_parsing_tests {
     #[test]
     fn test_mock_transactions_response_structure() {
         let mock_response = MockResponses::transactions_response();
-        
+
         assert_eq!(mock_response["status"], "1");
         assert!(mock_response["result"].is_array());
-        
+
         let first_tx = &mock_response["result"][0];
         assert!(first_tx["blockNumber"].is_string());
         assert!(first_tx["hash"].is_string());
@@ -349,10 +345,10 @@ mod response_parsing_tests {
     #[test]
     fn test_mock_internal_transactions_response_structure() {
         let mock_response = MockResponses::internal_transactions_response();
-        
+
         assert_eq!(mock_response["status"], "1");
         assert!(mock_response["result"].is_array());
-        
+
         let first_internal_tx = &mock_response["result"][0];
         assert!(first_internal_tx["type"].is_string());
         assert!(first_internal_tx["traceId"].is_string());
@@ -361,10 +357,10 @@ mod response_parsing_tests {
     #[test]
     fn test_mock_validated_blocks_response_structure() {
         let mock_response = MockResponses::validated_blocks_response();
-        
+
         assert_eq!(mock_response["status"], "1");
         assert!(mock_response["result"].is_array());
-        
+
         let first_block = &mock_response["result"][0];
         assert!(first_block["blockReward"].is_string());
         assert!(first_block["timeStamp"].is_string());
@@ -373,10 +369,10 @@ mod response_parsing_tests {
     #[test]
     fn test_mock_beacon_withdrawals_response_structure() {
         let mock_response = MockResponses::beacon_withdrawals_response();
-        
+
         assert_eq!(mock_response["status"], "1");
         assert!(mock_response["result"].is_array());
-        
+
         let first_withdrawal = &mock_response["result"][0];
         assert!(first_withdrawal["withdrawalIndex"].is_string());
         assert!(first_withdrawal["validatorIndex"].is_string());
@@ -408,31 +404,35 @@ mod performance_tests {
     #[tokio::test]
     async fn test_concurrent_query_construction() {
         let client = TestUtils::create_test_client();
-        
+
         let start = Instant::now();
-        
+
         // Create multiple queries concurrently
         let queries = tokio::join!(
+            async { client.accounts().transactions(TestUtils::valid_address()) },
             async {
-                client.accounts().transactions(TestUtils::valid_address())
-            },
-            async {
-                client.accounts().internal_transactions()
+                client
+                    .accounts()
+                    .internal_transactions()
                     .by_address(TestUtils::valid_address())
             },
             async {
-                client.accounts().beacon_withdrawals(TestUtils::validator_address())
+                client
+                    .accounts()
+                    .beacon_withdrawals(TestUtils::validator_address())
             },
             async {
-                client.accounts().historical_balance(TestUtils::valid_address())
+                client
+                    .accounts()
+                    .historical_balance(TestUtils::valid_address())
             }
         );
-        
+
         let elapsed = start.elapsed();
-        
+
         // Query construction should be very fast (< 1ms)
         assert!(elapsed.as_millis() < 10);
-        
+
         // All queries should be constructed successfully
         assert_eq!(queries.0.get_address(), TestUtils::valid_address());
         assert_eq!(queries.1.get_address(), TestUtils::valid_address());
@@ -444,7 +444,7 @@ mod performance_tests {
     fn test_large_parameter_handling() {
         let client = TestUtils::create_test_client();
         let accounts = client.accounts();
-        
+
         // Test with maximum values
         let query = accounts
             .transactions(TestUtils::valid_address())
@@ -452,10 +452,13 @@ mod performance_tests {
             .offset(TestConstants::MAX_PAGE_SIZE)
             .start_block(0)
             .end_block(u64::MAX);
-            
+
         // Should handle large values without panicking
         assert_eq!(query.get_pagination().page, Some(u32::MAX));
-        assert_eq!(query.get_pagination().offset, Some(TestConstants::MAX_PAGE_SIZE));
+        assert_eq!(
+            query.get_pagination().offset,
+            Some(TestConstants::MAX_PAGE_SIZE)
+        );
         assert_eq!(query.get_pagination().start_block, Some(0));
         assert_eq!(query.get_pagination().end_block, Some(u64::MAX));
     }

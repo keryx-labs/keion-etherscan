@@ -239,7 +239,7 @@ impl TestConstants {
     pub const GOERLI_BLOCK: u64 = 9_000_000;
     pub const RECENT_BLOCK: u64 = 19_000_000;
     pub const OLD_BLOCK: u64 = 1_000_000;
-    
+
     pub const STANDARD_PAGE_SIZE: u32 = 100;
     pub const MAX_PAGE_SIZE: u32 = 10_000;
     pub const MAX_MULTI_ADDRESS_COUNT: usize = 20;

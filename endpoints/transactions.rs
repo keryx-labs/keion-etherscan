@@ -10,6 +10,6 @@ impl<'a> Transactions<'a> {
     pub fn new(client: &'a EtherscanClient) -> Self {
         Self { client }
     }
-    
+
     // TODO: Implement transaction endpoints
 }

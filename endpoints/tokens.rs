@@ -10,6 +10,6 @@ impl<'a> Tokens<'a> {
     pub fn new(client: &'a EtherscanClient) -> Self {
         Self { client }
     }
-    
+
     // TODO: Implement token endpoints
 }
