@@ -24,5 +24,6 @@ target/
 # Added by cargo
 
 /target
-.claude
+.claude/*
+!.claude/endpoint-development-workflow.md
 .idea
