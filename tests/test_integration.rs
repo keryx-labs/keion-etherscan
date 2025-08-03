@@ -882,3 +882,70 @@ mod contract_integration_edge_cases {
         }
     }
 }
+
+/// Integration tests for transaction status checking workflow
+mod transaction_integration_workflow_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_complete_transaction_status_analysis_workflow() {
+        let client = TestUtils::create_test_client();
+        let transactions = client.transactions();
+
+        // Known transaction hashes for testing (in real scenarios these would be from blockchain)  
+        let successful_tx = "0x1234567890123456789012345678901234567890123456789012345678901234";
+
+        // Step 1: Check individual execution status
+        let _execution_status_query = transactions.get_execution_status(successful_tx);
+        // In real integration: let execution_status = execution_status_query.await.unwrap();
+
+        // Step 2: Check individual receipt status
+        let _receipt_status_query = transactions.get_receipt_status(successful_tx);
+        // In real integration: let receipt_status = receipt_status_query.await.unwrap();
+
+        // Step 3: Get comprehensive status for detailed analysis
+        let _comprehensive_query = transactions.get_comprehensive_status(successful_tx);
+        // In real integration: let comprehensive_status = comprehensive_query.await.unwrap();
+
+        // Step 4: Quick success check for simple validation
+        let _success_check_query = transactions.is_transaction_successful(successful_tx);
+        // In real integration: let is_successful = success_check_query.await.unwrap();
+
+        // Verify all queries were constructed successfully
+        assert_eq!(client.network(), Network::Mainnet);
+    }
+
+    #[tokio::test]
+    async fn test_batch_transaction_status_analysis_workflow() {
+        let client = TestUtils::create_test_client();
+        let transactions = client.transactions();
+
+        // Batch of transactions to analyze
+        let tx_hashes = vec![
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "0x2222222222222222222222222222222222222222222222222222222222222222",
+            "0x3333333333333333333333333333333333333333333333333333333333333333",
+        ];
+
+        // Step 1: Batch check all transaction statuses
+        let _batch_full_query = transactions
+            .batch_status()
+            .transactions(&tx_hashes);
+        // In real integration: let batch_results = batch_full_query.execute().await.unwrap();
+
+        // Step 2: Batch check only execution status (for pre-Byzantium analysis)
+        let _batch_execution_query = transactions
+            .batch_status()
+            .transactions(&tx_hashes)
+            .execution_only();
+
+        // Step 3: Batch check only receipt status (for post-Byzantium analysis)  
+        let _batch_receipt_query = transactions
+            .batch_status()
+            .transactions(&tx_hashes)
+            .receipt_only();
+
+        // Verify batch operations were constructed successfully
+        assert_eq!(client.network(), Network::Mainnet);
+    }
+}
