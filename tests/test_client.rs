@@ -1,5 +1,5 @@
-use std::time::Duration;
 use keion_etherscan::{EtherscanClient, EtherscanError, Network};
+use std::time::Duration;
 
 #[test]
 fn test_builder_pattern() {
@@ -32,10 +32,7 @@ fn test_api_key_preview() {
 
 #[test]
 fn test_short_api_key_preview() {
-    let client = EtherscanClient::builder()
-        .api_key("short")
-        .build()
-        .unwrap();
+    let client = EtherscanClient::builder().api_key("short").build().unwrap();
 
     assert_eq!(client.api_key_preview(), "****");
 }

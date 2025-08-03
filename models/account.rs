@@ -1,5 +1,5 @@
+use crate::models::{Address, BigNumber, BlockchainData, StringNumber};
 use serde::{Deserialize, Serialize};
-use crate::models::{Address, BigNumber, StringNumber, BlockchainData};
 
 /// ETH balance information for an account
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -57,7 +57,10 @@ pub struct TokenBalance {
     pub symbol: String,
 
     /// Token decimals
-    #[serde(rename = "TokenDecimal", deserialize_with = "crate::models::deserialize_optional_string_number")]
+    #[serde(
+        rename = "TokenDecimal",
+        deserialize_with = "crate::models::deserialize_optional_string_number"
+    )]
     pub decimals: Option<u64>,
 
     /// Token quantity (raw amount)
@@ -235,7 +238,10 @@ mod tests {
         };
 
         let balance = multi.to_balance();
-        assert_eq!(balance.account.unwrap().as_str(), "0x742d35cc6634c0532925a3b8d19389c4d5e1e4a6");
+        assert_eq!(
+            balance.account.unwrap().as_str(),
+            "0x742d35cc6634c0532925a3b8d19389c4d5e1e4a6"
+        );
         assert_eq!(balance.balance.as_str(), "1000000000000000000");
     }
 

@@ -3,22 +3,24 @@
 use crate::EtherscanClient;
 
 pub mod accounts;
-pub mod transactions;
-pub mod contracts;
 pub mod blocks;
-pub mod tokens;
+pub mod contracts;
 pub mod stats;
+pub mod tokens;
+pub mod transactions;
 
 pub use accounts::Accounts;
-pub use transactions::Transactions;
-pub use contracts::Contracts;
 pub use blocks::Blocks;
-pub use tokens::Tokens;
+pub use contracts::Contracts;
 pub use stats::Stats;
+pub use tokens::Tokens;
+pub use transactions::Transactions;
 
 /// Base trait for all endpoint groups
 pub trait EndpointGroup {
-    fn new(client: &EtherscanClient) -> Self;
+    fn new(client: &EtherscanClient) -> Self
+    where
+        Self: Sized;
 }
 
 /// Macro to implement common endpoint functionality

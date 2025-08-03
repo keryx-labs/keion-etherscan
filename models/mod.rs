@@ -4,18 +4,22 @@
 //! by the Etherscan API endpoints.
 
 mod account;
-mod transaction;
-mod contract;
+mod beacon_withdrawal;
 mod block;
-mod token;
+mod contract;
 mod gas;
+mod token;
+mod transaction;
+mod validated_block;
 
 pub use account::*;
-pub use transaction::*;
-pub use contract::*;
+pub use beacon_withdrawal::*;
 pub use block::*;
-pub use token::*;
+pub use contract::*;
 pub use gas::*;
+pub use token::*;
+pub use transaction::*;
+pub use validated_block::*;
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

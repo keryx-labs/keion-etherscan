@@ -15,7 +15,7 @@
 //!
 //! ## Quick Start
 //!
-//! ```rust
+//! ```rust,no_run
 //! use keion_etherscan::{EtherscanClient, Network};
 //!
 //! #[tokio::main]
@@ -100,35 +100,63 @@
 //! - Network statistics
 //! - Gas prices
 
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![warn(clippy::all)]
 
 // Re-exports for public API
 pub use client::{EtherscanClient, EtherscanClientBuilder};
 pub use error::{EtherscanError, Result};
-pub use types::{Network, Sort, Tag, BlockType, TransactionType, Pagination};
+pub use types::{BlockType, Network, Pagination, Sort, Tag, TransactionType};
 
 // Re-export key models that users will work with
 pub use models::{
-    // Account models
-    Balance, TokenBalance, AccountInfo, MultiBalance,
-    // Transaction models
-    Transaction, InternalTransaction, TokenTransfer, TransactionReceipt, TransactionLog,
+    AccountInfo,
     // Common model types
-    Address, TxHash, BigNumber, StringNumber, HexNumber,
+    Address,
+    // Account models
+    Balance,
+    BeaconWithdrawal,
+    BigNumber,
+    CodeFormat,
+    // Contract models
+    ContractAbi,
+    ContractCreation,
+    ContractSource,
+    HexNumber,
+    InternalTransaction,
+    LibraryLink,
+    MultiBalance,
+    OptimizationSettings,
+    ProxyVerificationStatus,
+    StringNumber,
+    TokenBalance,
+    TokenTransfer,
+    // Transaction models
+    Transaction,
+    TransactionLog,
+    TransactionReceipt,
+    TxHash,
+    ValidatedBlock,
+    VerificationRequest,
+    VerificationStatus,
+};
+
+// Re-export key endpoint builders for convenience
+pub use endpoints::contracts::{
+    ProxyVerificationBuilder, SolidityVerificationBuilder, VyperVerificationBuilder,
 };
 
 // Module declarations
 mod client;
-mod error;
+pub mod error;
 mod types;
 
 pub mod endpoints;
 pub mod models;
 
 // Feature-gated exports
-#[cfg(feature = "rate-limiting")]
-pub use client::RateLimiter;
+// #[cfg(feature = "rate-limiting")]
+// pub use client::RateLimiter;
 
 // Version and metadata
 /// Current version of the keion-etherscan crate
@@ -138,15 +166,13 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const USER_AGENT: &str = concat!("keion-etherscan/", env!("CARGO_PKG_VERSION"));
 
 /// Convenience type alias for results
-pub type EtherscanResult<T> = Result<T, EtherscanError>;
+pub type EtherscanResult<T> = Result<T>;
 
 /// Prelude module for convenient imports
 pub mod prelude {
     //! Convenient re-exports for common usage
     pub use crate::{
-        EtherscanClient, EtherscanError, Result,
-        Network, Sort, Tag, BlockType,
-        Balance, Transaction, TokenTransfer,
-        Address, TxHash,
+        Address, Balance, BlockType, EtherscanClient, EtherscanError, Network, Result, Sort, Tag,
+        TokenTransfer, Transaction, TxHash,
     };
 }

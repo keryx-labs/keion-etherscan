@@ -20,13 +20,17 @@ pub enum EtherscanError {
 
     /// HTTP error response
     Http {
+        /// HTTP status code
         status: u16,
+        /// Error message
         message: String,
     },
 
     /// API returned an error status
     Api {
+        /// Error message from API
         message: String,
+        /// Optional result details
         result: Option<String>,
     },
 
@@ -47,7 +51,9 @@ pub enum EtherscanError {
 
     /// Rate limit exceeded
     RateLimit {
+        /// Seconds until retry is allowed
         retry_after: Option<u64>,
+        /// Rate limit message
         message: String,
     },
 
@@ -59,7 +65,9 @@ pub enum EtherscanError {
 
     /// Feature not supported on this network
     UnsupportedNetwork {
+        /// Network name
         network: String,
+        /// Feature name
         feature: String,
     },
 
@@ -102,13 +110,13 @@ impl EtherscanError {
 
     /// Check if this error is retryable
     pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
-            EtherscanError::Request(_) |
-            EtherscanError::Http { status, .. } if *status >= 500 ||
-            EtherscanError::RateLimit { .. } ||
-            EtherscanError::Timeout(_)
-        )
+        match self {
+            EtherscanError::Request(_) => true,
+            EtherscanError::Http { status, .. } => *status >= 500,
+            EtherscanError::RateLimit { .. } => true,
+            EtherscanError::Timeout(_) => true,
+            _ => false,
+        }
     }
 
     /// Get the error category for logging/metrics
@@ -152,12 +160,10 @@ impl fmt::Display for EtherscanError {
             EtherscanError::Http { status, message } => {
                 write!(f, "HTTP error {}: {}", status, message)
             }
-            EtherscanError::Api { message, result } => {
-                match result {
-                    Some(result) => write!(f, "API error: {} (result: {})", message, result),
-                    None => write!(f, "API error: {}", message),
-                }
-            }
+            EtherscanError::Api { message, result } => match result {
+                Some(result) => write!(f, "API error: {} (result: {})", message, result),
+                None => write!(f, "API error: {}", message),
+            },
             EtherscanError::Response(msg) => {
                 write!(f, "Response error: {}", msg)
             }
@@ -173,12 +179,17 @@ impl fmt::Display for EtherscanError {
             EtherscanError::InvalidBlock(block) => {
                 write!(f, "Invalid block identifier: {}", block)
             }
-            EtherscanError::RateLimit { retry_after, message } => {
-                match retry_after {
-                    Some(seconds) => write!(f, "Rate limit exceeded: {} (retry after {} seconds)", message, seconds),
-                    None => write!(f, "Rate limit exceeded: {}", message),
-                }
-            }
+            EtherscanError::RateLimit {
+                retry_after,
+                message,
+            } => match retry_after {
+                Some(seconds) => write!(
+                    f,
+                    "Rate limit exceeded: {} (retry after {} seconds)",
+                    message, seconds
+                ),
+                None => write!(f, "Rate limit exceeded: {}", message),
+            },
             EtherscanError::Timeout(msg) => {
                 write!(f, "Request timeout: {}", msg)
             }
@@ -186,7 +197,11 @@ impl fmt::Display for EtherscanError {
                 write!(f, "Invalid parameters: {}", msg)
             }
             EtherscanError::UnsupportedNetwork { network, feature } => {
-                write!(f, "Feature '{}' is not supported on network '{}'", feature, network)
+                write!(
+                    f,
+                    "Feature '{}' is not supported on network '{}'",
+                    feature, network
+                )
             }
             EtherscanError::Internal(msg) => {
                 write!(f, "Internal error: {}", msg)
