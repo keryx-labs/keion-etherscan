@@ -117,6 +117,8 @@ pub use models::{
     Balance,
     BeaconWithdrawal,
     BigNumber,
+    Block,
+    BlockchainData,
     CodeFormat,
     // Contract models
     ContractAbi,
@@ -135,6 +137,9 @@ pub use models::{
     Transaction,
     TransactionLog,
     TransactionReceipt,
+    TransactionStatus,
+    ContractExecutionStatus,
+    TransactionReceiptStatus,
     TxHash,
     ValidatedBlock,
     VerificationRequest,

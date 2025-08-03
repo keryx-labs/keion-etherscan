@@ -472,3 +472,105 @@ impl TransactionLog {
         self.block_number.value()
     }
 }
+
+/// Contract execution status response
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ContractExecutionStatus {
+    /// Error status: "0" for success, "1" for failure
+    #[serde(rename = "isError")]
+    pub is_error: StringNumber,
+
+    /// Error description if transaction failed
+    #[serde(rename = "errDescription")]
+    pub error_description: String,
+}
+
+impl ContractExecutionStatus {
+    /// Check if the contract execution was successful
+    pub fn is_successful(&self) -> bool {
+        self.is_error.value() == 0
+    }
+
+    /// Check if the contract execution failed
+    pub fn is_failed(&self) -> bool {
+        self.is_error.value() != 0
+    }
+
+    /// Get error description if transaction failed
+    pub fn error_message(&self) -> Option<&str> {
+        if self.is_failed() && !self.error_description.is_empty() {
+            Some(&self.error_description)
+        } else {
+            None
+        }
+    }
+}
+
+/// Transaction receipt status response (post-Byzantium fork)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransactionReceiptStatus {
+    /// Status: "0" for failure, "1" for success
+    pub status: StringNumber,
+}
+
+impl TransactionReceiptStatus {
+    /// Check if the transaction was successful
+    pub fn is_successful(&self) -> bool {
+        self.status.value() == 1
+    }
+
+    /// Check if the transaction failed
+    pub fn is_failed(&self) -> bool {
+        self.status.value() != 1
+    }
+}
+
+/// Combined transaction status information
+#[derive(Debug, Clone)]
+pub struct TransactionStatus {
+    pub tx_hash: TxHash,
+    pub contract_execution: Option<ContractExecutionStatus>,
+    pub receipt_status: Option<TransactionReceiptStatus>,
+}
+
+impl TransactionStatus {
+    /// Create a new transaction status container
+    pub fn new<S: Into<TxHash>>(tx_hash: S) -> Self {
+        Self {
+            tx_hash: tx_hash.into(),
+            contract_execution: None,
+            receipt_status: None,
+        }
+    }
+
+    /// Check if transaction succeeded based on available status information
+    /// Prioritizes receipt status over contract execution status
+    pub fn is_successful(&self) -> Option<bool> {
+        if let Some(receipt) = &self.receipt_status {
+            Some(receipt.is_successful())
+        } else if let Some(execution) = &self.contract_execution {
+            Some(execution.is_successful())
+        } else {
+            None
+        }
+    }
+
+    /// Get comprehensive status description
+    pub fn status_description(&self) -> String {
+        match self.is_successful() {
+            Some(true) => "Transaction successful".to_string(),
+            Some(false) => {
+                if let Some(execution) = &self.contract_execution {
+                    if let Some(error) = execution.error_message() {
+                        format!("Transaction failed: {}", error)
+                    } else {
+                        "Transaction failed".to_string()
+                    }
+                } else {
+                    "Transaction failed".to_string()
+                }
+            }
+            None => "Status unknown".to_string(),
+        }
+    }
+}

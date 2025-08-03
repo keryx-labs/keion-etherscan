@@ -10,38 +10,45 @@ Implement all remaining Etherscan API endpoints by following GitHub issues in or
 
 ### Step 1: Issue Analysis & Branch Creation
 
-1. **Fetch latest changes**
+1. **Start from current feature branch** (progressive development)
+
    ```bash
-   git checkout develop
-   git pull origin develop
+   # For the first issue after accounts (Issue #2):
+   git checkout develop && git pull origin develop
+
+   # For subsequent issues (Issue #3+), start from previous feature branch:
+   git checkout feat/[PREVIOUS_ENDPOINT]  # e.g., feat/contracts for Issue #3
    ```
 
 2. **Identify next issue**
+
    - Go to: https://github.com/keryx-labs/keion-etherscan/issues
    - Process issues in numerical order
    - Read issue description thoroughly
 
-3. **Create feature branch**
+3. **Create progressive feature branch**
    ```bash
    git checkout -b feat/[ENDPOINT_NAME]
    ```
-   Examples:
-   - `feat/contracts` - for contract-related endpoints
-   - `feat/blocks` - for block-related endpoints
-   - `feat/transactions` - for transaction endpoints
-   - `feat/tokens` - for token endpoints
-   - `feat/stats` - for statistics endpoints
+   Examples (progressive branching):
+   - `feat/contracts` - for contract-related endpoints (from develop)
+   - `feat/blocks` - for block-related endpoints (from feat/contracts)
+   - `feat/transactions` - for transaction endpoints (from feat/blocks)
+   - `feat/tokens` - for token endpoints (from feat/transactions)
+   - `feat/stats` - for statistics endpoints (from feat/tokens)
 
 ### Step 2: Implementation Phase
 
 #### 2.1 Endpoint Module Development
 
 1. **Create/Update endpoint module** in `endpoints/[name].rs`
+
    - Follow the pattern established in `endpoints/accounts.rs`
    - Use consistent naming conventions
    - Implement builder pattern for complex queries
 
 2. **Key implementation patterns to follow:**
+
    ```rust
    // Endpoint struct
    pub struct [EndpointName]<'a> {
@@ -74,6 +81,7 @@ Implement all remaining Etherscan API endpoints by following GitHub issues in or
    ```
 
 3. **Add getter methods for testing**
+
    ```rust
    // Getter methods for testing (always add these)
    pub fn get_[field_name](&self) -> [ReturnType] {
@@ -88,11 +96,13 @@ Implement all remaining Etherscan API endpoints by following GitHub issues in or
 #### 2.2 Model Development
 
 1. **Create model structs** in `models/[name].rs`
+
    - Use `serde` for JSON deserialization
    - Follow existing patterns in `models/` directory
    - Add helper methods for common operations
 
 2. **Model patterns:**
+
    ```rust
    #[derive(Debug, Clone, Serialize, Deserialize)]
    pub struct [ModelName] {
@@ -110,11 +120,13 @@ Implement all remaining Etherscan API endpoints by following GitHub issues in or
 #### 2.3 Update Module Exports
 
 1. **Update `endpoints/mod.rs`**
+
    ```rust
    pub mod [endpoint_name];
    ```
 
 2. **Update main `lib.rs`**
+
    ```rust
    // Add to EtherscanClient impl
    pub fn [endpoint_name](&self) -> endpoints::[EndpointName] {
@@ -133,11 +145,13 @@ Implement all remaining Etherscan API endpoints by following GitHub issues in or
 #### 3.1 Unit Tests
 
 1. **Create test file** `tests/test_[endpoint]_endpoints.rs`
+
    - Follow pattern from `tests/test_accounts_endpoints.rs`
    - Test all builder methods and parameter validation
    - Test query construction and parameter serialization
 
 2. **Test categories to include:**
+
    ```rust
    mod builder_tests {
        // Test query builder construction and parameters
@@ -217,10 +231,11 @@ cargo machete
 
 ```bash
 git add .
-git commit -m "[Comprehensive commit message without Claude attribution]"
+git commit -m "[Comprehensive commit message without any Claude attribution]"
 ```
 
 **Commit message template:**
+
 ```
 Implement [ENDPOINT_NAME] endpoints with comprehensive testing
 
@@ -258,36 +273,45 @@ Closes #[ISSUE_NUMBER]
 git push -u origin feat/[endpoint]
 
 # Create merge request
-gh pr create --base develop --title "[DESCRIPTIVE_TITLE]" --body "[COMPREHENSIVE_MR_DESCRIPTION]"
+gh pr create --base develop --title "[DESCRIPTIVE_TITLE]" --body "[COMPREHENSIVE_MR_DESCRIPTION without any mention of being coauthored by Claude!]"
 ```
 
 **MR Description Template:**
+
 ```markdown
 ## Summary
+
 [Brief description of what this MR implements]
 
 ## Problem Statement
+
 [Description of the GitHub issue being solved]
 
 ## Solution Overview
+
 [High-level description of the implementation approach]
 
 ### 🔧 Endpoints Implemented
+
 - `[method_name]()` - [Description]
 - `[method_name]()` - [Description]
 
 ### 🏗️ Query Builders Added
+
 - `[QueryBuilder]` - [Capabilities and features]
 
 ### 📊 Models Added
+
 - `[ModelName]` - [Purpose and usage]
 
 ## Test Results
 ```
+
 ✅ [Endpoint] Tests: [N]/[N] passing
 ✅ Integration Tests: [N]/[N] passing  
 ✅ Model Tests: [N]/[N] passing
 ✅ Total: [N] tests passing, 0 failing
+
 ```
 
 ## Key Benefits
@@ -304,12 +328,12 @@ Closes https://github.com/keryx-labs/keion-etherscan/issues/[N]
 ### Step 6: Iterate to Next Issue
 
 1. **Merge current MR** (after review/approval)
-2. **Switch back to develop**
+2. **Continue progressively from current branch**
    ```bash
-   git checkout develop
-   git pull origin develop
+   # Stay on current feature branch to build next feature on top
+   # Next issue will branch from this feature branch
    ```
-3. **Repeat from Step 1** with next issue
+3. **Repeat from Step 1** with next issue (branching from current feature)
 
 ## 🔍 Implementation Guidelines
 
@@ -332,8 +356,9 @@ Closes https://github.com/keryx-labs/keion-etherscan/issues/[N]
 ### Issues Processing Order
 
 Process GitHub issues in numerical order:
-1. Issue #2 - Contracts endpoints
-2. Issue #3 - Blocks endpoints  
+
+1. ✅ Issue #2 - Contracts endpoints (COMPLETED)
+2. Issue #3 - Blocks endpoints
 3. Issue #4 - Transactions endpoints
 4. Issue #5 - Tokens endpoints
 5. Issue #6 - Statistics endpoints
@@ -341,7 +366,8 @@ Process GitHub issues in numerical order:
 
 ## ⚠️ Important Notes
 
-- **Never mention Claude authorship** in commits or MRs
+- **Use progressive branching** - Each new issue branches from the previous feature branch, not from develop
+- **Never mention Claude authorship** in commits or MRs (e.g., no "Co-Authored-By: Claude" or "Generated with Claude Code")
 - **Always run full test suite** before committing
 - **Follow semantic commit messages** for clear git history
 - **Link all MRs to their corresponding issues**
@@ -349,3 +375,5 @@ Process GitHub issues in numerical order:
 - **Add getter methods** to all query builders for testing support
 
 This workflow ensures consistent, high-quality implementations across all endpoints while maintaining the project's established patterns and standards.
+
+After all of the issues is done, open an MR from develop into main.

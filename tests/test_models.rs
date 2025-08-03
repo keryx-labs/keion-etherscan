@@ -617,3 +617,291 @@ fn test_optimization_settings_edge_cases() {
     assert!(!disabled_with_runs.enabled);
     assert_eq!(disabled_with_runs.runs, 200);
 }
+
+/// Test transaction status model deserialization and functionality
+mod transaction_status_model_tests {
+    use super::*;
+    use keion_etherscan::{ContractExecutionStatus, TransactionReceiptStatus, TransactionStatus};
+
+    #[test]
+    fn test_contract_execution_status_deserialization() {
+        // Test successful execution
+        let success_json = r#"{
+            "isError": "0",
+            "errDescription": ""
+        }"#;
+        let success_status: ContractExecutionStatus = serde_json::from_str(success_json).unwrap();
+        assert!(success_status.is_successful());
+        assert!(!success_status.is_failed());
+        assert!(success_status.error_message().is_none());
+
+        // Test failed execution with error message
+        let failure_json = r#"{
+            "isError": "1",
+            "errDescription": "Bad jump destination"
+        }"#;
+        let failure_status: ContractExecutionStatus = serde_json::from_str(failure_json).unwrap();
+        assert!(!failure_status.is_successful());
+        assert!(failure_status.is_failed());
+        assert_eq!(failure_status.error_message(), Some("Bad jump destination"));
+
+        // Test failed execution with empty error message
+        let failure_empty_json = r#"{
+            "isError": "1",
+            "errDescription": ""
+        }"#;
+        let failure_empty: ContractExecutionStatus = serde_json::from_str(failure_empty_json).unwrap();
+        assert!(!failure_empty.is_successful());
+        assert!(failure_empty.is_failed());
+        assert!(failure_empty.error_message().is_none());
+    }
+
+    #[test]
+    fn test_transaction_receipt_status_deserialization() {
+        // Test successful transaction
+        let success_json = r#"{
+            "status": "1"
+        }"#;
+        let success_status: TransactionReceiptStatus = serde_json::from_str(success_json).unwrap();
+        assert!(success_status.is_successful());
+        assert!(!success_status.is_failed());
+
+        // Test failed transaction
+        let failure_json = r#"{
+            "status": "0"
+        }"#;
+        let failure_status: TransactionReceiptStatus = serde_json::from_str(failure_json).unwrap();
+        assert!(!failure_status.is_successful());
+        assert!(failure_status.is_failed());
+    }
+
+    #[test]
+    fn test_transaction_status_creation() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let status = TransactionStatus::new(tx_hash);
+
+        assert_eq!(status.tx_hash.as_str(), tx_hash);
+        assert!(status.contract_execution.is_none());
+        assert!(status.receipt_status.is_none());
+        assert!(status.is_successful().is_none());
+        assert_eq!(status.status_description(), "Status unknown");
+    }
+
+    #[test]
+    fn test_transaction_status_with_receipt_only() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let mut status = TransactionStatus::new(tx_hash);
+
+        // Set successful receipt status
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(1),
+        });
+
+        assert_eq!(status.is_successful(), Some(true));
+        assert!(status.status_description().contains("successful"));
+
+        // Set failed receipt status
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(0),
+        });
+
+        assert_eq!(status.is_successful(), Some(false));
+        assert!(status.status_description().contains("failed"));
+    }
+
+    #[test]
+    fn test_transaction_status_with_execution_only() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let mut status = TransactionStatus::new(tx_hash);
+
+        // Set successful execution status
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(0),
+            error_description: String::new(),
+        });
+
+        assert_eq!(status.is_successful(), Some(true));
+        assert!(status.status_description().contains("successful"));
+
+        // Set failed execution status with error
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(1),
+            error_description: "Out of gas".to_string(),
+        });
+
+        assert_eq!(status.is_successful(), Some(false));
+        assert!(status.status_description().contains("Out of gas"));
+    }
+
+    #[test]
+    fn test_transaction_status_priority_receipt_over_execution() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let mut status = TransactionStatus::new(tx_hash);
+
+        // Set execution as failed
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(1),
+            error_description: "Execution failed".to_string(),
+        });
+
+        // Set receipt as successful (should take precedence)
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(1),
+        });
+
+        // Receipt status should override execution status
+        assert_eq!(status.is_successful(), Some(true));
+        assert!(status.status_description().contains("successful"));
+
+        // Now reverse: receipt failed, execution successful
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(0),
+        });
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(0),
+            error_description: String::new(),
+        });
+
+        // Receipt status should still take precedence
+        assert_eq!(status.is_successful(), Some(false));
+        assert!(status.status_description().contains("failed"));
+    }
+
+    #[test]
+    fn test_transaction_status_error_handling() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let mut status = TransactionStatus::new(tx_hash);
+
+        // Test execution status with various error values
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(2), // Invalid value, should be treated as error
+            error_description: "Unknown error".to_string(),
+        });
+
+        assert_eq!(status.is_successful(), Some(false)); // Non-zero should be failure
+        assert!(status.status_description().contains("Unknown error"));
+
+        // Test receipt status with invalid values
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(2), // Invalid value, should be treated as failure
+        });
+
+        assert_eq!(status.is_successful(), Some(false)); // Non-1 should be failure
+    }
+
+    #[test]
+    fn test_transaction_status_edge_cases() {
+        // Test with zero hash
+        let zero_hash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        let status = TransactionStatus::new(zero_hash);
+        assert_eq!(status.tx_hash.as_str(), zero_hash);
+
+        // Test TxHash creation from different types
+        let status_from_str = TransactionStatus::new("0xabcdef1234567890");
+        let status_from_string = TransactionStatus::new("0xabcdef1234567890".to_string());
+        let status_from_txhash = TransactionStatus::new(TxHash::new("0xabcdef1234567890"));
+
+        assert_eq!(status_from_str.tx_hash.as_str(), "0xabcdef1234567890");
+        assert_eq!(status_from_string.tx_hash.as_str(), "0xabcdef1234567890");
+        assert_eq!(status_from_txhash.tx_hash.as_str(), "0xabcdef1234567890");
+    }
+
+    #[test]
+    fn test_real_world_api_response_formats() {
+        // Test with real-world Etherscan API response format for execution status
+        let execution_response = r#"{
+            "status": "1",
+            "message": "OK",
+            "result": {
+                "isError": "1",
+                "errDescription": "Bad jump destination"
+            }
+        }"#;
+
+        // In real integration, this would be parsed through the EtherscanResponse wrapper
+        // For unit testing, we test the inner result part
+        let execution_json = r#"{
+            "isError": "1",
+            "errDescription": "Bad jump destination"
+        }"#;
+        let execution: ContractExecutionStatus = serde_json::from_str(execution_json).unwrap();
+        assert!(execution.is_failed());
+        assert_eq!(execution.error_message(), Some("Bad jump destination"));
+
+        // Test with real-world receipt status response
+        let receipt_response = r#"{
+            "status": "1",
+            "message": "OK",
+            "result": {
+                "status": "1"
+            }
+        }"#;
+
+        let receipt_json = r#"{
+            "status": "1"
+        }"#;
+        let receipt: TransactionReceiptStatus = serde_json::from_str(receipt_json).unwrap();
+        assert!(receipt.is_successful());
+    }
+
+    #[test]
+    fn test_contract_execution_status_equality() {
+        let status1 = ContractExecutionStatus {
+            is_error: StringNumber::from(0),
+            error_description: "".to_string(),
+        };
+
+        let status2 = ContractExecutionStatus {
+            is_error: StringNumber::from(0),
+            error_description: "".to_string(),
+        };
+
+        let status3 = ContractExecutionStatus {
+            is_error: StringNumber::from(1),
+            error_description: "Error".to_string(),
+        };
+
+        assert_eq!(status1, status2);
+        assert_ne!(status1, status3);
+        assert_ne!(status2, status3);
+    }
+
+    #[test]
+    fn test_transaction_receipt_status_equality() {
+        let status1 = TransactionReceiptStatus {
+            status: StringNumber::from(1),
+        };
+
+        let status2 = TransactionReceiptStatus {
+            status: StringNumber::from(1),
+        };
+
+        let status3 = TransactionReceiptStatus {
+            status: StringNumber::from(0),
+        };
+
+        assert_eq!(status1, status2);
+        assert_ne!(status1, status3);
+        assert_ne!(status2, status3);
+    }
+
+    #[test]
+    fn test_transaction_status_debug_output() {
+        let tx_hash = "0x1234567890123456789012345678901234567890123456789012345678901234";
+        let mut status = TransactionStatus::new(tx_hash);
+
+        status.contract_execution = Some(ContractExecutionStatus {
+            is_error: StringNumber::from(1),
+            error_description: "Test error".to_string(),
+        });
+
+        status.receipt_status = Some(TransactionReceiptStatus {
+            status: StringNumber::from(0),
+        });
+
+        // Test that debug formatting works (important for error reporting)
+        let debug_str = format!("{:?}", status);
+        assert!(debug_str.contains(tx_hash));
+        assert!(debug_str.contains("Test error"));
+    }
+}

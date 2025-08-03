@@ -282,4 +282,10 @@ pub mod validation {
         validate_address(address)?;
         Ok(address.to_lowercase())
     }
+
+    /// Normalize transaction hash to lowercase
+    pub fn normalize_tx_hash(hash: &str) -> Result<String, EtherscanError> {
+        validate_tx_hash(hash)?;
+        Ok(hash.to_lowercase())
+    }
 }
